@@ -3,18 +3,17 @@
 #Bike-Sharing-Dataset.zip", "ProjectData/Bike-Sharing-Dataset.zip")
 
 
-url <- "https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2"
 
 dir("data")
 
-if (!file.exists("data/StormData.cvs.bz2")) {
-    download.file(url, "data/StormData.cvs.bz2", method = "internal")  
+url<- 'https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2'
+
+if(!file.exists('~/GitHub/Storm_NOOA/data/stormdata.csv.bz2')){
+    download.file(url,'~/GitHub/Storm_NOOA/data/stormdata.csv.bz2',method='internal')
 }
 
-#SD <- read.csv('data/stormdata.csv.bz2', stringsAsFactors = F, strip.white = TRUE, na.strings = c("NA","?",""))
+SD <- read.csv('~/GitHub/Storm_NOOA/data/stormdata.csv.bz2', stringsAsFactors = F)
 
-
-SD <- read.csv('data/stormdata.csv.bz2', stringsAsFactors = F)
 
 sum(is.na(SD$CROPDMG))
 sum(is.na(SD$PROPDMG))
@@ -40,16 +39,12 @@ str(SD_clean)
 dimclean<-dim(SD_clean)[1]
 
 ##########and take year only 
-sum(is.na(SD_clean$CROPDMG))
-sum(is.na(SD_clean$PROPDMG))
-summary(SD_clean$CROPDMG)
-
 
 SD_clean$BGN_DATE <- as.Date(SD_clean$BGN_DATE, "%m/%d/%Y ")
 
 SD_clean$BGN_DATE <- format (SD_clean$BGN_DATE, "%Y")
 
-table(SD_clean$BGN_DATE )
+# table(SD_clean$BGN_DATE )
 
 ##########second operation : recalculate damages using magnifier 
 
@@ -103,17 +98,11 @@ kevents
 
 # Non-informative "summary": only 3 obs.
   
-SD_clean[(grepl("SUMMARY .+", SD_clean$EVTYPE)),]
-
 sumh<-sum(headevents)
 (sumh)/dimclean # 978% obs in first 20 labels
 
 ################## new test on the 985 events types
 summary(SD_clean$FATALITIES)
-
-fatByYearType <- tapply(SD_clean$FATALITIES,interaction(SD_clean$BGN_DATE,
-                                                        SD_clean$EVTYPE),sum)
-class(fatByYearType)
 
 library (plyr)
 
@@ -138,8 +127,10 @@ hist (SDxx$qIN, breaks=20)
 
 limitIN <- quantile(SDxx$qIN, probs= c(0.97))[[1]]
 dim (SDxx[SDxx$qIN>limitIN,])
+SDxx$qIN[SDxx$qIN>limitIN]
 
 
+#########################################
 
 summary (SDxx$qPR )
 summary (SDxx$qCR  )
@@ -147,16 +138,20 @@ summary (SDxx$qCR  )
 
 SDxx<- SDxx[order(SDxx$qFA, decreasing = T),]
 hFA<-SDxx[1:30,1]
-
+sum(SDxx[1:30,3])/sum(SDxx[1:985,3]) # with 30 94% all FA
 
 SDxx<- SDxx[order(SDxx$qIN, decreasing = T),]
 hIN<-SDxx[1:30,1]
+sum(SDxx[1:30,4])/sum(SDxx[1:985,4]) # 97% of all IN
+
 
 SDxx<- SDxx[order(SDxx$qPR, decreasing = T),]
 hPR<-SDxx[1:30,1]
+sum(SDxx[1:30,5])/sum(SDxx[1:985,5]) # 99% of all PR
 
 SDxx<- SDxx[order(SDxx$qCR, decreasing = T),]
 hCR<-SDxx[1:30,1]
+sum(SDxx[1:30,6])/sum(SDxx[1:985,6]) # 98% of all CR
 
 nkevents<-unique (append (hFA, append(hIN,append(hPR, hCR))))
 
@@ -202,7 +197,7 @@ kkevents [!kkevents%in%kkevents[mylist]]
 mylist[duplicated (mylist)] 
 
 ####################
-SD_pre <- SD_clean # safe side
+SD_post <- SD_clean # safe side
 # SD_clean <- SD_pre
 
 kkevents_post <- kkevents
@@ -221,7 +216,7 @@ postevents<-unique(kkevents_post)
 for (i in 1:length(names(kevent_tranf))){
   
   ivents<-kkevents[kevent_tranf[[i]]]
-  SD_clean$EVTYPE [SD_clean$EVTYPE %in% ivents ]<-names (kevent_tranf[i])
+  SD_post$EVTYPE [SD_post$EVTYPE %in% ivents ]<-names (kevent_tranf[i])
 }
 
 # write.table(SD_clean,"data/SD_clean.txt", sep=";")
@@ -229,37 +224,43 @@ for (i in 1:length(names(kevent_tranf))){
 
 
 
-SDET<-ddply(SD_clean, .(EVTYPE), summarise,
+SDET<-ddply(SD_post, .(EVTYPE), summarise,
             nobs= length(EVTYPE),
             qFA= sum(FATALITIES),
             qIN= sum(INJURIES),
             qPR= sum(PROPDMG),
             qCR= sum(CROPDMG)    )
 
+
+str(SDET)
 ###############################################
 
 SDET<- SDET[order(SDET$qFA, decreasing = T),]
 topFA<-SDET[1:10,1]
+sum(SDET[1:10,3])/sum(SDET[1:944,3]) # with 10 93% all FA
 
 SDET[1:30,c(1,2,3)]
 
 
 SDET<- SDET[order(SDET$qIN, decreasing = T),]
 topIN<-SDET[1:10,1]
+sum(SDET[1:10,4])/sum(SDET[1:944,4]) # with 10 97% all FA
 
 SDET[1:30,c(1,2,4)]
 
 
 SDET<- SDET[order(SDET$qPR, decreasing = T),]
+topPR<-SDET[1:10,1]
+sum(SDET[1:10,5])/sum(SDET[1:944,5]) # with 10 99% all FA
+
 SDET[1:30,c(1,2,5)]
 
-topPR<-SDET[1:10,1]
-
 SDET<- SDET[order(SDET$qCR, decreasing = T),]
-SDET[1:30,c(1,2,6)]
-
 topCR<-SDET[1:10,1]
+sum(SDET[1:10,6])/sum(SDET[1:944,6]) # with 10 98% all FA
 
+
+SDET[1:30,c(1,2,6)]
 
 topevents<-unique (append (topFA, append(topIN,append(topPR, topCR))))
 
@@ -268,7 +269,7 @@ topevents
 
 topSD<-SDET[SDET$EVTYPE%in%topevents,]
 
-write.table(topSD,"data/topSD.txt", sep=";", stringsAsFactors = F)
+write.table(topSD,"data/topSD.txt", sep=";")
 
 topSD <- read.table("data/topSD.txt", sep=";", stringsAsFactors = F)
 
@@ -310,13 +311,18 @@ SDfinal<-SDfinal[,c(-5,-6)]
 
 write.table(SDfinal,"data/SDfinal.txt", sep=";")
 #############################################
-SDfinal <- read.table("data/SDfinal.txt", sep=";")
+SDfinal <- read.table("data/SDfinal.txt", sep=";", stringsAsFactors = F)
+str(SDfinal)
+SDfinal
+
+
+
 
 ##########################################
 
 ## PRINTING
 
-colnames(SDfinal)<-c("event","nevents",
+colnames(SDfinal)<-c("event","n.events",
                      "n.accidents","accident",
                      "tot.damage","damage")
 
@@ -324,7 +330,7 @@ SDfinal$accident <-as.factor(SDfinal$accident)
 SDfinal$damage <-as.factor(SDfinal$damage)
 
 levels(SDfinal$accident) <- c("fatalities", "injuries")
-levels(SDfinal$damage) <- c("properties", "crops")
+levels(SDfinal$damage) <- c( "crops", "properties")
 
 
 str(SDfinal)
