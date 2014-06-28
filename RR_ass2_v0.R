@@ -266,6 +266,10 @@ topevents<-unique (append (topFA, append(topIN,append(topPR, topCR))))
 
 topevents<-topevents [order(topevents)]
 topevents
+length(topevents)
+
+write.table(topevents,"data/topevent.txt", row.names = F,
+            col.names = F)
 
 topSD<-SDET[SDET$EVTYPE%in%topevents,]
 
